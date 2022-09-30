@@ -14,19 +14,10 @@ namespace Lab_3
     {
         public Form1()
         {
-            InitializeComponent();   
-            
+            InitializeComponent();
+            pictureBox1.Image = new Bitmap(776,407);
         }
-
-        int x0, y0;
-        int x1, y1;
-        int x2, y2;
-        int w = 776;
-        int h = 407;
-
-        Pen pen = new Pen(Color.Black, 3f);
-
-        
+                   
         static void Swap<T>(ref T lhs, ref T rhs)
         {
             T temp;
@@ -36,8 +27,14 @@ namespace Lab_3
         }
 
         private void button1_Click(object sender, EventArgs e)
-        {          
+        {
+            Graphics g = pictureBox1.CreateGraphics();
+
+            g = Graphics.FromImage(pictureBox1.Image);
+            g.Clear(Color.LightGray);
             
+            int w = pictureBox1.Width;
+            int h = pictureBox1.Height;
             Random rnd = new Random();
             int x0 = rnd.Next(w);
             int y0 = rnd.Next(h);
@@ -45,80 +42,53 @@ namespace Lab_3
             int y1 = rnd.Next(h);
             int x2 = rnd.Next(w);
             int y2 = rnd.Next(h);
-            Graphics g = pictureBox1.CreateGraphics();
-            g.Clear(Color.White);
 
-           
-            if (y0 > y1)
-            {
-                Swap(ref y0, ref y1);
-                Swap(ref x0, ref x1);              
-            }
+            var p1 = new Point(x0, y0);
+            var p2 = new Point(x1, y1);
+            var p3 = new Point(x2, y2);
+            Triangle(p1,p2,p3);
 
-            if (y0 > y2)
-            {
-                Swap(ref y0, ref y2);
-                Swap(ref x0, ref x2);              
-            }
-
-            if (y1 > y2)
-            {
-                Swap(ref y1,ref y2);
-                Swap(ref x1,ref x2);                
-            }
-
-
-            int cross_x1;
-            int cross_x2;
-            int dx1 = x1 - x0;
-            int dy1 = y1 - y0;
-            int dx2 = x2 - x0;
-            int dy2 = y2 - y0;
-
-            int top_y = y0;
-
-            while (top_y < y1)
-            {
-                cross_x1 = x0 + dx1 * (top_y - y0) / dy1;
-                cross_x2 = x0 + dx2 * (top_y - y0) / dy2;
-                if (cross_x1 > cross_x2)
-                {
-                    
-                    g.DrawRectangle(pen,cross_x2, top_y, cross_x1 - cross_x2, 1);
-                }
-                else
-                {
-                    
-                    g.DrawRectangle(pen, cross_x1, top_y, cross_x2 - cross_x1, 1);
-                }
-
-                top_y++;
-            }
-
-            dx1 = x2 - x1;
-            dy1 = y2 - y1;
-            while (top_y < y2)
-            {
-                cross_x1 = x1 + dx1 * (top_y - y1) / dy1;
-                cross_x2 = x0 + dx2 * (top_y - y0) / dy2;
-                if (cross_x1 > cross_x2)
-                {
-                    
-                    g.DrawRectangle(pen, cross_x2, top_y, cross_x1 - cross_x2, 1);
-                }
-                else
-                {
-                    
-                    g.DrawRectangle(pen, cross_x1, top_y, cross_x2 - cross_x1, 1);
-                }
-
-                top_y++;
-            }
-            
+            pictureBox1.Invalidate();
 
         }
 
-       
+        void Triangle(Point p1, Point p2, Point p3)
+        {
+            if (p1.Y == p2.Y && p1.Y == p3.Y) return;
+
+            if (p1.Y > p2.Y)
+                Swap(ref p1, ref p2);
+
+            if (p1.Y > p3.Y)
+                Swap(ref p1, ref p3);
+
+            if (p2.Y > p3.Y)
+                Swap(ref p3, ref p2);
+
+            int total_height = p3.Y - p1.Y;
+            for (int i = 0; i < total_height; i++)
+            {
+
+                bool second_half = i > p2.Y - p1.Y || p2.Y == p1.Y;
+                int segment_height = second_half ? p3.Y - p2.Y : p2.Y - p1.Y;
+                float alpha = (float)i / total_height;
+                float beta = (float)(i - (second_half ? p2.Y - p1.Y : 0)) / segment_height;
+                var pa = new Point((int)(p1.X + (p3.X - p1.X) * alpha), (int)(p1.Y + (p3.Y - p1.Y) * alpha));
+                var pb = second_half ? new Point((int)(p2.X + (p3.X - p2.X) * beta), (int)(p2.Y + (p3.Y - p2.Y) * beta)) : new Point((int)(p1.X + (p2.X - p1.X) * beta), (int)(p1.Y + (p2.Y - p1.Y) * beta));
+
+                if (pa.X > pb.X)
+                    Swap(ref pa, ref pb);
+
+                for (int j = pa.X; j <= pb.X; j++)
+                {
+                    double r = 255;
+                    double g = 255;
+                    double b = 255;
+                    var color = Color.FromArgb((int)(r * (total_height - i) / total_height), (int)(g * (i + 1) / (p3.Y - p1.Y)), (int)(b * (pb.X - j) / (pb.X - pa.X + 1)));
+                    (pictureBox1.Image as Bitmap).SetPixel(j, p1.Y + i, color);
+                }
+            }
+        }
 
 
     }
